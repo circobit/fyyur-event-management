@@ -6,7 +6,7 @@ I am extending the project by designing the **conceptual, logical, and physical 
 
 ### Current Work
 
-- Conceptual, logical, and physical ERDs (see `/docs/`).
+- Conceptual, logical, and physical ERDs (see `/docs/erd`).
 - Base SQLAlchemy models (`app.py`) aligned with the ERD.
 - Proper constraints: uniqueness, not-null, check constraints, cascading deletes.
 - Scoped commits to track incremental improvements (schema, constraints, migrations, etc.).
@@ -33,6 +33,20 @@ This app is nearly complete. It is only missing one thing… real data! While th
 - learning more about a specific artist or venue.
 
 We want Fyyur to be the next new platform that artists and musical venues can use to find each other, and discover new music shows. Let's make that happen!
+
+## ERD Diagrams
+
+- Conceptual ERD
+
+![- Conceptual ERD](/docs/erd/1-conceptual-erd.png)
+
+- Logical ERD
+
+![- Logical ERD](/docs/erd/2-logical-erd.png)
+
+- Physical ERD
+
+![- - Physical ERD](/docs/erd/3-physical-erd.png)
 
 ## Tech Stack (Dependencies)
 
