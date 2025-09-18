@@ -242,14 +242,97 @@ def create_venue_form():
 
 @app.route("/venues/create", methods=["POST"])
 def create_venue_submission():
-    # TODO: insert form data as a new Venue record in the db, instead
-    # TODO: modify data to be the data object returned from db insertion
+    # Instantiate VenueForm from forms.py
+    form = VenueForm()
+    
+    # Use the validate_on_submit() method to check if it's a POST
+    # request and if the data is valid according to the form's rules
+    if form.validate_on_submit():
+        try:
+            # Check if postal code exists filtering by city and state
+            # I use .first() to get the first result or to get None if no match is found
+            postal_code = PostalCode.query.filter_by(city=form.city.data, state=form.state.data).first()
 
-    # on successful db insert, flash success
-    flash("Venue " + request.form["name"] + " was successfully listed!")
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+            # If postal code doesn't exist, create the record
+            if not postal_code:
+                postal_code = PostalCode(city=form.city.data, state=form.state.data)
+                db.session.add(postal_code)
+            
+            # Check if location exists filtering by postal code id and the address from the form
+            location = Location.query.filter_by(postal_code_id=postal_code.id, address=form.address.data).first()
+            # If location doesn't exist, create the record
+            if not location:
+                location = Location(address=form.address.data, postal_code_id=postal_code.id)
+                db.session.add(location)
+            
+            # Instatiate venue
+            new_venue = Venue(
+                name=form.name.data, 
+                phone=form.phone.data, 
+                image_link=form.image_link.data,
+                seeking_talent=form.seeking_talent.data,
+                seeking_description=form.seeking_description.data,
+                location=location
+            )
+
+            # Handle genres (Many-to-Many relationship)
+            genre_names = form.genres.data
+
+            for name in genre_names:
+                genre = Genre.query.filter_by(genre_name=name).first()
+
+                if not genre:
+                    genre = Genre(genre_name=name)
+                    db.session.add(genre)
+            
+                # Create the GenreVenue link by appending the genre to the Venue
+                new_venue.genres.append(genre)
+
+            # Handle social link
+            social_url = form.social_link.data
+            if social_url:
+                # Determine the link type by checking the URL
+                link_type_name = "Website"  # Default
+                if "instagram.com" in social_url:
+                    link_type_name = "Instagram"
+                elif "tiktok.com" in social_url:
+                    link_type_name = "TikTok"
+                elif "x.com" in social_url or "twitter.com" in social_url:
+                    link_type_name = "X"
+                elif "facebook.com" in social_url:
+                    link_type_name = "Facebook"
+                elif "youtube.com" in social_url:
+                    link_type_name = "YouTube"
+                
+                # Get or create the LinkType object
+                link_type = LinkType.query.filter_by(type_name=link_type_name).first()
+                if not link_type:
+                    link_type = LinkType(type_name=link_type_name)
+                    db.session.add(link_type)
+                
+                # Create Link object
+                link_obj = Link(url=social_url, link_type=link_type)
+                db.session.add(link_obj)
+
+                # Create VenueLink
+                venue_link = VenueLink(venue=new_venue, link=link_obj)
+                db.session.add(venue_link)
+
+            # Add venue
+            db.session.add(new_venue)
+            # If the operations succeed, commit changes and show message.
+            db.session.commit()
+            flash("Venue " + request.form["name"] + " was successfully listed!")
+        
+        except Exception as e:
+            # Rollback changes in case of failure. Show message and the error itself.
+            db.session.rollback()
+            flash("An error ocurred. Venue " + form.name.data + " could not be listed.")
+            print(e)
+        finally:
+            # Regardless of the result, close the db connection.
+            db.session.close()
+
     return render_template("pages/home.html")
 
 
