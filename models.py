@@ -11,6 +11,8 @@ class Venue(db.Model):
     name = db.Column(db.String, nullable=False)
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
+    seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
+    seeking_description = db.Column(db.String())
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
     location_id = db.Column(db.Integer, db.ForeignKey("locations.id"), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
@@ -137,6 +139,16 @@ class GenreArtist(db.Model):
     artist = db.relationship("Artist", back_populates="genres_artists")
     genre = db.relationship("Genre", back_populates="genres_artists")
 
+
+class GenreVenue(db.Model):
+    __tablename__ = "genres_venues"
+
+    venue_id = db.Column(
+        db.Integer, db.ForeignKey("venues.id", ondelete="CASCADE"), primary_key=True
+    )
+    genre_id = db.Column(
+        db.Integer, db.ForeignKey("genres.id", ondelete="CASCADE"), primary_key=True
+    )
 
 class LinkType(db.Model):
     __tablename__ = "link_types"
