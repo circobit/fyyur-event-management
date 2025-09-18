@@ -90,43 +90,42 @@ def make_primary_venue_link(venue_id, link_id):
     return redirect(url_for("show_venue", venue_id=venue_id))
 
 
+# ----------------------------------------------------------------------------#
 #  Venues
-#  ----------------------------------------------------------------
+# ----------------------------------------------------------------------------#
 
 
 @app.route("/venues")
 def venues():
-    # TODO: replace with real venues data.
-    #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-    data = [
-        {
-            "city": "San Francisco",
-            "state": "CA",
-            "venues": [
-                {
-                    "id": 1,
-                    "name": "The Musical Hop",
-                    "num_upcoming_shows": 0,
-                },
-                {
-                    "id": 3,
-                    "name": "Park Square Live Music & Coffee",
-                    "num_upcoming_shows": 1,
-                },
-            ],
-        },
-        {
-            "city": "New York",
-            "state": "NY",
-            "venues": [
-                {
-                    "id": 2,
-                    "name": "The Dueling Pianos Bar",
-                    "num_upcoming_shows": 0,
-                }
-            ],
-        },
-    ]
+    # Empty list to be replaced with real data
+    data = []
+    
+    city_state_map = {}
+
+    for venue in Venue.query.all():
+        # City and state for the current venue
+        city = venue.location.postal_code.city
+        state = venue.location.postal_code.state
+
+        # Check if the entry for the combination of city/state exists
+        if (city, state) in city_state_map:
+            index = city_state_map[(city, state)]
+
+            # Append current venue to the venues list
+            data[index]["venues"].append(venue)
+
+        else:
+            # Create a new entry for this city/state
+            new_area = {
+                "city": city,
+                "state": state,
+                "venues": [venue]
+            }
+
+            data.append(new_area)
+            # Index of the recently created dictionary
+            city_state_map[(city, state)] = len(data) - 1
+
     return render_template("pages/venues.html", areas=data)
 
 
