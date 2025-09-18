@@ -52,14 +52,30 @@ def format_datetime(value, format="medium"):
 app.jinja_env.filters["datetime"] = format_datetime
 
 # ----------------------------------------------------------------------------#
-# Controllers.
+# Controllers
 # ----------------------------------------------------------------------------#
+
+# These functions search for any existing primary link within ArtistLink and VenueLink,
+# clears it out and set a new primary link. There can just be one primary link for those tables.
+
+def set_primary_link_for_artist(artist_id, link_id):
+    with db.session.begin():
+        # Clear existing primary link
+        db.session.query(ArtistLink).filter_by(artist_id=artist_id, is_primary=True).update({"is_primary": False})
+        # Set new primary link
+        db.session.query(ArtistLink).filter_by(artist_id=artist_id, link_id=link_id).update({"is_primary": True})
+
+def set_primary_link_for_venue(venue_id, link_id):
+    with db.session.begin():
+        # Clear existing primary link
+        db.session.query(VenueLink).filter_by(venue_id=venue_id, is_primary=True).update({"is_primary": False})
+        # Set new primary link
+        db.session.query(VenueLink).filter_by(venue_id=venue_id, link_id=link_id).update({"is_primary": True})
 
 
 @app.route("/")
 def index():
     return render_template("pages/home.html")
-
 
 @app.route("/artists/<int:artist_id>/links/<int:link_id>/make-primary", methods=["POST"])
 def make_primary_link(artist_id, link_id):
