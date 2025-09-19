@@ -2,16 +2,13 @@
 # Imports
 # ----------------------------------------------------------------------------#
 
-import json
 import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
 from forms import *
 from database import db
 from models import *
@@ -339,6 +336,8 @@ def create_venue_submission():
             # If the operations succeed, commit changes and show message.
             db.session.commit()
             flash("Venue " + request.form["name"] + " was successfully listed!")
+            # On success, redirect to the homepage
+            return redirect(url_for('index'))
         
         except Exception as e:
             # Rollback changes in case of failure. Show message and the error itself.
@@ -349,7 +348,7 @@ def create_venue_submission():
             # Regardless of the result, close the db connection.
             db.session.close()
 
-    return render_template("pages/home.html")
+    return render_template("forms/new_venue.html", form=form)
 
 
 @app.route("/venues/<venue_id>", methods=["DELETE"])

@@ -3,54 +3,136 @@
 {% block content %}
   <div class="form-wrapper">
     <form method="post" class="form" action="/venues/create">
+        {{ form.hidden_tag() }}
       <h3 class="form-heading">List a new venue <a href="{{ url_for('index') }}" title="Back to homepage"><i class="fa fa-home pull-right"></i></a></h3>
       <div class="form-group">
         <label for="name">Name</label>
         {{ form.name(class_ = 'form-control', autofocus = true) }}
+
+        {# This block will display validation errors for the name field #}
+        {% if form.name.errors %}
+            <ul class="errors">
+            {% for error in form.name.errors %}
+            <li class="text-danger">{{ error }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
       </div>
       <div class="form-group">
           <label>City & State</label>
           <div class="form-inline">
             <div class="form-group">
-              {{ form.city(class_ = 'form-control', placeholder='City', autofocus = true) }}
+                {{ form.city(class_ = 'form-control', placeholder='City', autofocus = true) }}
+
+                {% if form.city.errors %}
+                    <ul class="errors">
+                    {% for error in form.city.errors %}
+                    <li class="text-danger">{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
             </div>
             <div class="form-group">
-              {{ form.state(class_ = 'form-control', placeholder='State', autofocus = true) }}
+                {{ form.state(class_ = 'form-control', placeholder='State', autofocus = true) }}
+
+                {% if form.state.errors %}
+                    <ul class="errors">
+                    {% for error in form.state.errors %}
+                    <li class="text-danger">{{ error }}</li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
             </div>
           </div>
       </div>
       <div class="form-group">
         <label for="address">Address</label>
         {{ form.address(class_ = 'form-control', autofocus = true) }}
+
+        {% if form.address.errors %}
+            <ul class="errors">
+            {% for error in form.address.errors %}
+            <li class="text-danger">{{ error }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
       </div>
       <div class="form-group">
-          <label for="phone">Phone</label>
-          {{ form.phone(class_ = 'form-control', placeholder='xxx-xxx-xxxx', autofocus = true) }}
+            <label for="phone">Phone</label>
+            {{ form.phone(class_ = 'form-control', placeholder='xxx-xxx-xxxx', autofocus = true) }}
+
+            {% if form.phone.errors %}
+                <ul class="errors">
+                {% for error in form.phone.errors %}
+                <li class="text-danger">{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
         </div>
       <div class="form-group">
         <label for="genres">Genres</label>
         <small>Ctrl+Click to select multiple</small>
         {{ form.genres(class_ = 'form-control', placeholder='Genres, separated by commas', autofocus = true) }}
+
+        {% if form.genres.errors %}
+            <ul class="errors">
+            {% for error in form.genres.errors %}
+            <li class="text-danger">{{ error }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
       </div>
       
        <div class="form-group">
-          <label for="image_link">Image Link</label>
-          {{ form.image_link(class_ = 'form-control', placeholder='http://', autofocus = true) }}
+            <label for="image_link">Image Link</label>
+            {{ form.image_link(class_ = 'form-control', placeholder='http://', autofocus = true) }}
+
+            {% if form.image_link.errors %}
+                <ul class="errors">
+                {% for error in form.image_link.errors %}
+                <li class="text-danger">{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
        </div>
 
        <div class="form-group">
             <label for="social_url">Social Link</label>
             {{ form.social_link(class_ = 'form-control', placeholder='http://', autofocus = true) }}
+
+            {% if form.social_link.errors %}
+                <ul class="errors">
+                {% for error in form.social_link.errors %}
+                <li class="text-danger">{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
        </div>
 
        <div class="form-group">
-             <label for="seeking_talent">Looking for Talent</label>
-             {{ form.seeking_talent(placeholder='Venue', autofocus = true) }}
+            <label for="seeking_talent">Looking for Talent</label>
+            {{ form.seeking_talent(placeholder='Venue', autofocus = true) }}
+
+            {% if form.seeking_talent.errors %}
+                <ul class="errors">
+                {% for error in form.seeking_talent.errors %}
+                <li class="text-danger">{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
        </div>
 
        <div class="form-group">
             <label for="seeking_description">Seeking Description</label>
             {{ form.seeking_description(class_ = 'form-control', placeholder='Description', autofocus = true) }}
+
+            {% if form.seeking_description.errors %}
+                <ul class="errors">
+                {% for error in form.seeking_description.errors %}
+                <li class="text-danger">{{ error }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
        </div>
       <input type="submit" value="Create Venue" class="btn btn-primary btn-lg btn-block">
     </form>

@@ -166,6 +166,7 @@ class GenreVenue(db.Model):
         db.Integer, db.ForeignKey("genres.id", ondelete="CASCADE"), primary_key=True
     )
 
+
 class LinkType(db.Model):
     __tablename__ = "link_types"
 
