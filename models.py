@@ -22,6 +22,11 @@ class Venue(db.Model):
     venue_links = db.relationship(
         "VenueLink", back_populates="venue", cascade="all, delete-orphan"
     )
+    genres = db.relationship(
+        "Genre", 
+        secondary="genres_venues",
+		back_populates="venues"
+	)
 
     __table_args__ = (
         db.Index("ix_venue_name", "name"),
@@ -45,10 +50,14 @@ class Artist(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
     shows = db.relationship("Show", back_populates="artist", cascade="all, delete-orphan")
-    genres_artists = db.relationship("GenreArtist", back_populates="artist")
     artist_links = db.relationship(
         "ArtistLink", back_populates="artist", cascade="all, delete-orphan"
     )
+    genres = db.relationship(
+        "Genre",
+        secondary="genres_artists",
+        back_populates="artists",
+	)
 
     __table_args__ = (db.Index("ix_artist_name", "name"),)
 
@@ -124,7 +133,16 @@ class Genre(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     genre_name = db.Column(db.String(120), nullable=False, unique=True)
-    genres_artists = db.relationship("GenreArtist", back_populates="genre")
+    venues = db.relationship(
+        "Venue",
+        secondary="genres_venues",
+        back_populates="genres",
+	)
+    artists = db.relationship(
+        "Artist",
+        secondary="genres_artists",
+        back_populates="genres"
+	)
 
 
 class GenreArtist(db.Model):
@@ -136,8 +154,6 @@ class GenreArtist(db.Model):
     genre_id = db.Column(
         db.Integer, db.ForeignKey("genres.id", ondelete="CASCADE"), primary_key=True
     )
-    artist = db.relationship("Artist", back_populates="genres_artists")
-    genre = db.relationship("Genre", back_populates="genres_artists")
 
 
 class GenreVenue(db.Model):
