@@ -42,14 +42,14 @@ class Artist(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
-    phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
-    seeking_venue = db.Column(db.Boolean, nullable=False, default=False)
-    seeking_description = db.Column(db.String())
     deleted_at = db.Column(db.DateTime(timezone=True), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), server_default=db.func.now())
     updated_at = db.Column(db.DateTime(timezone=True), onupdate=db.func.now())
+    seeking_venue = db.Column(db.Boolean, nullable=False, default=False)
+    seeking_description = db.Column(db.String())
     shows = db.relationship("Show", back_populates="artist", cascade="all, delete-orphan")
+    social_link = db.Column(db.String(500))
     artist_links = db.relationship(
         "ArtistLink", back_populates="artist", cascade="all, delete-orphan"
     )

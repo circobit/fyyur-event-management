@@ -361,8 +361,10 @@ def delete_venue(venue_id):
     return None
 
 
+#  ----------------------------------------------------------------
 #  Artists
 #  ----------------------------------------------------------------
+
 @app.route("/artists")
 def artists():
     # TODO: replace with real data returned from querying the database
@@ -565,13 +567,76 @@ def create_artist_form():
 @app.route("/artists/create", methods=["POST"])
 def create_artist_submission():
     # called upon submitting the new artist listing form
-    # TODO: insert form data as a new Venue record in the db, instead
-    # TODO: modify data to be the data object returned from db insertion
+    form = ArtistForm()
+    
+    if form.validate_on_submit():
+        try:
+            # Create new artist object
+            new_artist = Artist(
+                name=form.name.data,
+                image_link=form.image_link.data,
+                seeking_venue=form.seeking_venue.data,
+                seeking_description=form.seeking_description.data
+            )
 
-    # on successful db insert, flash success
-    flash("Artist " + request.form["name"] + " was successfully listed!")
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
+            # Handle the genres
+            genres = form.genres.data
+            for name in genres:
+                # Search for genre in the database
+                genre = Genre.query.filter_by(genre_name=name).first()
+                # If the genre is not found, create it
+                if not genre:
+                    genre = Genre(genre_name=name)
+                    db.session.add(genre)
+                # Append the genre to the genres list of the artist
+                new_artist.genres.append(genre)
+            
+            # Handle social link
+            social_url = form.social_link.data
+            if social_url:
+                # Determine the link type by checking the URL
+                link_type_name = "Website"  # Default
+                if "instagram.com" in social_url:
+                    link_type_name = "Instagram"
+                elif "tiktok.com" in social_url:
+                    link_type_name = "TikTok"
+                elif "x.com" in social_url or "twitter.com" in social_url:
+                    link_type_name = "X"
+                elif "facebook.com" in social_url:
+                    link_type_name = "Facebook"
+                elif "youtube.com" in social_url:
+                    link_type_name = "YouTube"
+                
+                # Get or create the LinkType object
+                link_type = LinkType.query.filter_by(type_name=link_type_name).first()
+                if not link_type:
+                    link_type = LinkType(type_name=link_type_name)
+                    db.session.add(link_type)
+                
+                # Create Link object
+                link_obj = Link(url=social_url, link_type=link_type)
+                db.session.add(link_obj)
+
+                # Create ArtistLink
+                artist_link = ArtistLink(artist=new_artist, link=link_obj)
+                db.session.add(artist_link)
+            
+            # Add artist 
+            db.session.add(new_artist)
+            db.session.commit()
+
+            # On successful db insert, flash success
+            flash("Artist " + request.form["name"] + " was successfully listed!")
+
+        except Exception as e:
+            # On unsuccessful db insert, flash an error instead.
+            db.session.rollback()
+            flash('An error occurred. Artist ' + form.name.data + ' could not be created.')
+
+        finally:
+            # Close the connection
+            db.session.close()
+
     return render_template("pages/home.html")
 
 
