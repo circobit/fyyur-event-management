@@ -10,6 +10,7 @@ I am extending the project by designing the **conceptual, logical, and physical 
 - **Modular Structure:** Models have been refactored from `app.py` into a dedicated `models.py` for better separation of concerns.
 - **Dynamic Content:** The venue list (`/venues`) is now fed by real-time database queries.
 - **Full CRUD for Venues:** Implemented the complete functionality to create new venues, including handling of relationships for location, genres, and social media links.
+- **Artist Creation:** Implemented the functionality to create new artists, including handling of relationships for genres and social media links.
 
 ### Goals
 
