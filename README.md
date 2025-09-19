@@ -4,17 +4,25 @@ This repository is based on the Udacity Backend Developer with Python Nanodegree
 
 I am extending the project by designing the **conceptual, logical, and physical ERD**, and implementing the **SQLAlchemy database model** with constraints, indexes, and relationships for better normalization and data governance.
 
-### Current Work
+### Project Status & Key Features
 
-- Conceptual, logical, and physical ERDs (see `/docs/erd`).
-- Base SQLAlchemy models (`app.py`) aligned with the ERD.
-- Proper constraints: uniqueness, not-null, check constraints, cascading deletes.
-- Scoped commits to track incremental improvements (schema, constraints, migrations, etc.).
+- **Data Modeling:** Conceptual, logical, and physical ERDs designed for a normalized and scalable database (see `/docs/erd`).
+- **Modular Structure:** Models have been refactored from `app.py` into a dedicated `models.py` for better separation of concerns.
+- **Dynamic Content:** The venue list (`/venues`) is now fed by real-time database queries.
+- **Full CRUD for Venues:** Implemented the complete functionality to create new venues, including handling of relationships for location, genres, and social media links.
 
 ### Goals
 
 - Build a production-ready schema aligned with industry best practices.
 - Showcase structured project growth and planning for portfolio/review purposes.
+
+### Design Decisions
+
+This project was extended with several key design choices to better align with modern web development best practices and data privacy principles.
+
+- **Artist Data Privacy:** The `Artist` model and corresponding forms intentionally do not capture location or phone number information. This decision adheres to data minimization principles (GDPR), avoiding the collection of sensitive personal data that is not essential to the application's core functionality.
+
+- **Flexible Social Links:** The original `facebook_link` and `website_link` fields in the forms were replaced with a single, flexible `social_link` field. The backend detects the platform (Instagram, TikTok, X, etc.) from the provided URL. This makes the application more modern, user-friendly, and adaptable to future changes in social media trends.
 
 ---
 
