@@ -373,23 +373,42 @@ def artists():
 
 @app.route("/artists/search", methods=["POST"])
 def search_artists():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-    # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
-    # search for "band" should return "The Wild Sax Band".
+    # Search on artists with partial string search. It must be case-insensitive.
+    # Seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
+    # Search for "band" should return "The Wild Sax Band".
+
+    search_terms = request.form.get("search_term", "")
+    artists_list = Artist.query.filter(Artist.name.ilike(f"%{search_terms}%")).all()
+
+    # Get current datetime in UTC format (timezone aware)
+    current_datetime = datetime.now(timezone.utc)
+    
     response = {
-        "count": 1,
-        "data": [
-            {
-                "id": 4,
-                "name": "Guns N Petals",
-                "num_upcoming_shows": 0,
-            }
-        ],
+        "count": len(artists_list),
+        "data": [],
     }
+
+    for artist in artists_list:
+        # Define the dictionary to insert in response["data"]
+        new_artist = {
+            "id": artist.id,
+            "name": artist.name,
+            "num_upcoming_shows": 0
+        }
+
+        # Check upcoming shows based on current datetime
+        # and sum up the number
+        for show in artist.shows:
+            if show.start_time > current_datetime:
+                new_artist["num_upcoming_shows"] += 1
+        
+        # Append the dictionary to the list in response["data"]
+        response["data"].append(new_artist)
+
     return render_template(
         "pages/search_artists.html",
         results=response,
-        search_term=request.form.get("search_term", ""),
+        search_term=search_terms,
     )
 
 
