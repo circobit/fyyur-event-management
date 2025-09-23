@@ -376,9 +376,11 @@ def search_artists():
     # Search on artists with partial string search. It must be case-insensitive.
     # Seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
     # Search for "band" should return "The Wild Sax Band".
-
     search_terms = request.form.get("search_term", "")
-    artists_list = Artist.query.filter(Artist.name.ilike(f"%{search_terms}%")).all()
+    
+    # Use .options(joinedload(Artist.shows)) to load the data from the shows in the same query
+    # and to avoid running further queries per each artist (N+1 problem)
+    artists_list = Artist.query.options(joinedload(Artist.shows)).filter(Artist.name.ilike(f"%{search_terms}%")).all()
 
     # Get current datetime in UTC format (timezone aware)
     current_datetime = datetime.now(timezone.utc)
