@@ -132,20 +132,41 @@ def search_venues():
     # TODO: implement search on venues with partial string search. Ensure it is case-insensitive.
     # seach for Hop should return "The Musical Hop".
     # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+    search_terms = request.form.get("search_term", "")
+    
+    # Use .options(joinedload(Venue.shows)) to load the data from the shows in the same query
+    # and to avoid running further queries per each artist (N+1 problem)
+    venues_list = Venue.query.options(joinedload(Venue.shows)).filter(Venue.name.ilike(f"%{search_terms}%")).all()
+    
+    # Get current datetime in UTC format (timezone aware)
+    current_datetime = datetime.now(timezone.utc)
+    
     response = {
-        "count": 1,
-        "data": [
-            {
-                "id": 2,
-                "name": "The Dueling Pianos Bar",
-                "num_upcoming_shows": 0,
-            }
-        ],
+        "count": len(venues_list),
+        "data": [],
     }
+    
+    for venue in venues_list:
+        # Define the dictionary to insert in response["data"]
+        new_venue= {
+            "id": venue.id,
+            "name": venue.name,
+            "num_upcoming_shows": 0
+        }
+
+        # Check upcoming shows based on current datetime
+        # and sum up the number
+        for show in venue.shows:
+            if show.start_time > current_datetime:
+                new_venue["num_upcoming_shows"] += 1
+        
+        # Append the dictionary to the list in response["data"]
+        response["data"].append(new_venue)
+
     return render_template(
         "pages/search_venues.html",
         results=response,
-        search_term=request.form.get("search_term", ""),
+        search_term=search_terms,
     )
 
 
