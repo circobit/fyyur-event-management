@@ -517,23 +517,35 @@ def edit_artist_submission(artist_id):
 
 @app.route("/venues/<int:venue_id>/edit", methods=["GET"])
 def edit_venue(venue_id):
+    # Get the venue to edit
+    venue_to_edit = Venue.query.options(
+            joinedload(Venue.location).joinedload(Location.postal_code),
+            joinedload(Venue.genres),
+            joinedload(Venue.venue_links).joinedload(VenueLink.link)
+        ).filter_by(id=venue_id).first()
+    
+    # Handle case where venue doesn't exist
+    if not venue_to_edit:
+        return render_template('errors/404.html')
+
+    # Populate form with values
     form = VenueForm()
-    venue = {
-        "id": 1,
-        "name": "The Musical Hop",
-        "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-        "address": "1015 Folsom Street",
-        "city": "San Francisco",
-        "state": "CA",
-        "phone": "123-123-1234",
-        "website": "https://www.themusicalhop.com",
-        "facebook_link": "https://www.facebook.com/TheMusicalHop",
-        "seeking_talent": True,
-        "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-        "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-    }
-    # TODO: populate form with values from venue with ID <venue_id>
-    return render_template("forms/edit_venue.html", form=form, venue=venue)
+
+    form.name.data = venue_to_edit.name
+    form.city.data = venue_to_edit.location.postal_code.city
+    form.state.data = venue_to_edit.location.postal_code.state
+    form.address.data = venue_to_edit.location.address
+    form.phone.data = venue_to_edit.phone
+    form.image_link.data = venue_to_edit.image_link
+    form.genres.data = [genre.genre_name for genre in venue_to_edit.genres]
+    form.seeking_talent.data = venue_to_edit.seeking_talent
+    form.seeking_description.data = venue_to_edit.seeking_description
+    
+    # Check if there are any links before trying to access them
+    if venue_to_edit.venue_links:
+        form.social_link.data = venue_to_edit.venue_links[0].link.url
+
+    return render_template("forms/edit_venue.html", form=form, venue=venue_to_edit)
 
 
 @app.route("/venues/<int:venue_id>/edit", methods=["POST"])
