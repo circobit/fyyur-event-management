@@ -11,6 +11,7 @@ I am extending the project by designing the **conceptual, logical, and physical 
 - **Dynamic Content:** The venue list (`/venues`) is now fed by real-time database queries.
 - **Full CRUD for Venues:** Implemented the complete functionality to create new venues, including handling of relationships for location, genres, and social media links.
 - **Full Create & Read for Artists:** Implemented the functionality to create new artists and display both a list of all artists and detailed artist pages with upcoming/past shows.
+- **Search Functionality:** Implemented efficient, case-insensitive partial-text search for both artists and venues.
 
 ### Goals
 
