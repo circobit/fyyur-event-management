@@ -341,6 +341,11 @@ def create_venue_submission():
     return render_template("forms/new_venue.html", form=form)
 
 
+#  ----------------------------------------------------------------
+#  Delete Venue
+#  ----------------------------------------------------------------
+
+
 @app.route("/venues/<int:venue_id>/delete", methods=["DELETE"])
 def delete_venue(venue_id):
     try:
@@ -458,7 +463,11 @@ def search_artists():
 @app.route("/artists/<int:artist_id>")
 def show_artist(artist_id):
     # shows the artist page with the given artist_id
-    artist = Artist.query.get(artist_id)
+    artist = Artist.query.options(
+            joinedload(Artist.genres),
+            joinedload(Artist.shows).joinedload(Show.venue),
+            joinedload(Artist.artist_links)
+        ).filter_by(id=artist_id).first()
     
     # TODO: Add a check here for a 404 error if artist is None
     if not artist:
