@@ -489,30 +489,113 @@ def show_artist(artist_id):
 
 @app.route("/artists/<int:artist_id>/edit", methods=["GET"])
 def edit_artist(artist_id):
+    # Get the artist to edit
+    artist_to_edit = Artist.query.options(
+            joinedload(Artist.genres),
+            joinedload(Artist.artist_links).joinedload(ArtistLink.link)
+        ).get(artist_id)
+
+    # Handle case where artist doesn't exist
+    if not artist_to_edit:
+        return render_template('errors/404.html')
+
+    # Instantiate artist form
     form = ArtistForm()
-    artist = {
-        "id": 4,
-        "name": "Guns N Petals",
-        "genres": ["Rock n Roll"],
-        "city": "San Francisco",
-        "state": "CA",
-        "phone": "326-123-5000",
-        "website": "https://www.gunsnpetalsband.com",
-        "facebook_link": "https://www.facebook.com/GunsNPetals",
-        "seeking_venue": True,
-        "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-        "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-    }
-    # TODO: populate form with fields from artist with ID <artist_id>
-    return render_template("forms/edit_artist.html", form=form, artist=artist)
+    # Populate form with values
+    form.name.data = artist_to_edit.name
+    form.genres.data = [ genre.genre_name for genre in artist_to_edit.genres ]
+    form.image_link.data = artist_to_edit.image_link
+    form.seeking_venue.data = artist_to_edit.seeking_venue
+    form.seeking_description.data = artist_to_edit.seeking_description
+
+    # Check if there are any links before trying to access them
+    if artist_to_edit.artist_links:
+        form.social_link.data = artist_to_edit.artist_links[0].link.url
+    
+    return render_template("forms/edit_artist.html", form=form, artist=artist_to_edit)
 
 
 @app.route("/artists/<int:artist_id>/edit", methods=["POST"])
 def edit_artist_submission(artist_id):
-    # TODO: take values from the form submitted, and update existing
-    # artist record with ID <artist_id> using the new attributes
+    # Get artist to edit
+    artist_to_edit = Artist.query.get(artist_id)
 
-    return redirect(url_for("show_artist", artist_id=artist_id))
+    # Instantiate artist form
+    form = ArtistForm()
+    # Validate artist form
+    if form.validate_on_submit():
+        try:
+            # Update the simple fields on the venue object
+            artist_to_edit.name = form.name.data
+            artist_to_edit.image_link = form.image_link.data
+            artist_to_edit.seeking_venue = form.seeking_venue.data
+            artist_to_edit.seeking_description = form.seeking_description.data
+
+            # For many-to-many fields, a reliable way to update is to
+            # clear the existing list and re-populate it with the new selections
+            # from the form. This ensures removed items are handled correctly.
+            artist_to_edit.genres.clear()
+            # Handle genres (Many-to-Many relationship)
+            genre_names = form.genres.data
+
+            for name in genre_names:
+                genre = Genre.query.filter_by(genre_name=name).first()
+
+                if not genre:
+                    genre = Genre(genre_name=name)
+                    db.session.add(genre)
+            
+                # Create the GenreVenue link by appending the genre to the Venue
+                artist_to_edit.genres.append(genre)
+            
+            # Clear venue_links list
+            artist_to_edit.artist_links.clear()
+            # Handle social link
+            social_url = form.social_link.data
+            if social_url:
+                # Determine the link type by checking the URL
+                link_type_name = "Website"  # Default
+                if "instagram.com" in social_url:
+                    link_type_name = "Instagram"
+                elif "tiktok.com" in social_url:
+                    link_type_name = "TikTok"
+                elif "x.com" in social_url or "twitter.com" in social_url:
+                    link_type_name = "X"
+                elif "facebook.com" in social_url:
+                    link_type_name = "Facebook"
+                elif "youtube.com" in social_url:
+                    link_type_name = "YouTube"
+                
+                # Get or create the LinkType object
+                link_type = LinkType.query.filter_by(type_name=link_type_name).first()
+                if not link_type:
+                    link_type = LinkType(type_name=link_type_name)
+                    db.session.add(link_type)
+                
+                # Create Link object
+                link_obj = Link(url=social_url, link_type=link_type)
+                db.session.add(link_obj)
+
+                # Create VenueLink
+                artist_link = VenueLink(artist=artist_to_edit, link=link_obj)
+                db.session.add(artist_link)
+            
+            # If the operations succeed, commit changes and show message.
+            db.session.commit()
+            flash('Artist ' + form.name.data + ' was successfully updated!')
+        except Exception as e:
+            # In case of error, rollback changes
+            db.session.rollback()
+            flash('An error occurred. Artist could not be updated.')
+        finally:
+            # Close the db session
+            db.session.close()
+
+        # On successful submission, redirect
+        return redirect(url_for("show_artist", artist_id=artist_id))
+
+    # If form.validate_on_submit() is False, re-render the page
+    return render_template("forms/edit_artist.html", form=form, artist=artist_to_edit)
 
 
 @app.route("/venues/<int:venue_id>/edit", methods=["GET"])
@@ -528,16 +611,16 @@ def edit_venue(venue_id):
     if not venue_to_edit:
         return render_template('errors/404.html')
 
-    # Populate form with values
+    # Instatiate venue form
     form = VenueForm()
-
+    # Populate form with values
     form.name.data = venue_to_edit.name
     form.city.data = venue_to_edit.location.postal_code.city
     form.state.data = venue_to_edit.location.postal_code.state
     form.address.data = venue_to_edit.location.address
     form.phone.data = venue_to_edit.phone
     form.image_link.data = venue_to_edit.image_link
-    form.genres.data = [genre.genre_name for genre in venue_to_edit.genres]
+    form.genres.data = [ genre.genre_name for genre in venue_to_edit.genres ]
     form.seeking_talent.data = venue_to_edit.seeking_talent
     form.seeking_description.data = venue_to_edit.seeking_description
     
