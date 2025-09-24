@@ -101,7 +101,7 @@ def venues():
     
     city_state_map = {}
 
-    for venue in Venue.query.all():
+    for venue in Venue.query.filter(Venue.deleted_at == None).all():
         # City and state for the current venue
         city = venue.location.postal_code.city
         state = venue.location.postal_code.state
@@ -414,7 +414,7 @@ def delete_artist(artist_id):
 
 @app.route("/artists")
 def artists():
-    data = Artist.query.all()
+    data = Artist.query.filter(Artist.deleted_at == None).all()
     return render_template("pages/artists.html", artists=data)
 
 
@@ -860,7 +860,7 @@ def shows():
     shows = Show.query.options(
             joinedload(Show.venue),
             joinedload(Show.artist)
-        ).all()
+        ).filter(Show.deleted_at == None).all()
 
     data = []
 
