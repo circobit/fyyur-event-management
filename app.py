@@ -550,9 +550,103 @@ def edit_venue(venue_id):
 
 @app.route("/venues/<int:venue_id>/edit", methods=["POST"])
 def edit_venue_submission(venue_id):
-    # TODO: take values from the form submitted, and update existing
-    # venue record with ID <venue_id> using the new attributes
-    return redirect(url_for("show_venue", venue_id=venue_id))
+    venue_to_edit = Venue.query.get(venue_id)
+    
+    form = VenueForm()
+
+    if form.validate_on_submit():
+        try:
+            # Update the simple fields on the venue object
+            venue_to_edit.name = form.name.data
+            venue_to_edit.phone = form.phone.data
+            venue_to_edit.image_link = form.image_link.data
+            venue_to_edit.seeking_talent = form.seeking_talent.data
+            venue_to_edit.seeking_description = form.seeking_description.data
+
+            # Check if postal code exists filtering by city and state
+            # I use .first() to get the first result or to get None if no match is found
+            postal_code = PostalCode.query.filter_by(city=form.city.data, state=form.state.data).first()
+
+            # If postal code doesn't exist, create the record
+            if not postal_code:
+                postal_code = PostalCode(city=form.city.data, state=form.state.data)
+                db.session.add(postal_code)
+            
+            # Check if location exists filtering by postal code id and the address from the form
+            location = Location.query.filter_by(postal_code_id=postal_code.id, address=form.address.data).first()
+            # If location doesn't exist, create the record
+            if not location:
+                location = Location(address=form.address.data, postal_code_id=postal_code.id)
+                db.session.add(location)
+            # Add location to Venue
+            venue_to_edit.location = location
+
+            # For many-to-many fields, a reliable way to update is to
+            # clear the existing list and re-populate it with the new selections
+            # from the form. This ensures removed items are handled correctly.
+            venue_to_edit.genres.clear()
+            # Handle genres (Many-to-Many relationship)
+            genre_names = form.genres.data
+
+            for name in genre_names:
+                genre = Genre.query.filter_by(genre_name=name).first()
+
+                if not genre:
+                    genre = Genre(genre_name=name)
+                    db.session.add(genre)
+            
+                # Create the GenreVenue link by appending the genre to the Venue
+                venue_to_edit.genres.append(genre)
+
+            # Clear venue_links list
+            venue_to_edit.venue_links.clear()
+            # Handle social link
+            social_url = form.social_link.data
+            if social_url:
+                # Determine the link type by checking the URL
+                link_type_name = "Website"  # Default
+                if "instagram.com" in social_url:
+                    link_type_name = "Instagram"
+                elif "tiktok.com" in social_url:
+                    link_type_name = "TikTok"
+                elif "x.com" in social_url or "twitter.com" in social_url:
+                    link_type_name = "X"
+                elif "facebook.com" in social_url:
+                    link_type_name = "Facebook"
+                elif "youtube.com" in social_url:
+                    link_type_name = "YouTube"
+                
+                # Get or create the LinkType object
+                link_type = LinkType.query.filter_by(type_name=link_type_name).first()
+                if not link_type:
+                    link_type = LinkType(type_name=link_type_name)
+                    db.session.add(link_type)
+                
+                # Create Link object
+                link_obj = Link(url=social_url, link_type=link_type)
+                db.session.add(link_obj)
+
+                # Create VenueLink
+                venue_link = VenueLink(venue=venue_to_edit, link=link_obj)
+                db.session.add(venue_link)
+            
+            # If the operations succeed, commit changes and show message.
+            db.session.commit()
+            flash('Venue ' + form.name.data + ' was successfully updated!')
+        except Exception as e:
+            # In case of error, rollback changes
+            db.session.rollback()
+            flash('An error occurred. Venue could not be updated.')
+            flash(e)
+        finally:
+            # Close the db session
+            db.session.close()
+        
+        # On successful submission, redirect
+        return redirect(url_for("show_venue", venue_id=venue_id))
+
+    # If form.validate_on_submit() is False, re-render the page
+    return render_template("forms/edit_venue.html", form=form, venue=venue_to_edit)
 
 
 #  ----------------------------------------------------------------
