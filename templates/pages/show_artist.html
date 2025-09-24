@@ -73,6 +73,33 @@
 </section>
 
 <a href="/artists/{{ artist.id }}/edit"><button class="btn btn-primary btn-lg">Edit</button></a>
+<button class="btn btn-danger btn-lg" id="delete-artist-button" data-id="{{ artist.id }}">Delete</button>
+
+<script>
+  const deleteBtn = document.getElementById('delete-artist-button');
+
+  deleteBtn.addEventListener('click', function(e) {
+    const artistId = e.target.dataset.id;
+
+    fetch('/artists/' + artistId + '/delete', {
+      method: 'DELETE'
+    })
+    .then(function(response) {
+      return response.json();
+    })
+    .then(function(data) {
+      if (data.success) {
+        window.location.href = '/';
+      } else {
+        alert('Error: ' + (data.message || 'Artist could not be deleted.'));
+      }
+    })
+    .catch(function(err) {
+      console.error('Error:', err);
+      alert('A network error occurred. Please try again.');
+    });
+  });
+</script>
 
 {% endblock %}
 

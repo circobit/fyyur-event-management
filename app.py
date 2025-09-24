@@ -401,6 +401,39 @@ def delete_venue(venue_id):
 
 
 #  ----------------------------------------------------------------
+#  Delete Artist
+#  ----------------------------------------------------------------
+
+
+@app.route("/artists/<int:artist_id>/delete", methods=["DELETE"])
+def delete_artist(artist_id):
+    try:
+        # Query venue by id
+        artist_to_delete = Artist.query.get(artist_id)
+
+        # Handle case where venue doesn't exist
+        if not artist_to_delete:
+            return jsonify({'success': False, 'message': 'Artist not found'}), 404
+        
+        # Implement soft delete
+        artist_to_delete.deleted_at = datetime.now(timezone.utc)
+        # Comit the transaction
+        db.session.commit()
+        # On success, return a success response.
+        flash('Artist ' + artist_to_delete.name + ' was successfully deleted!')
+        return jsonify({'success': True, 'deleted_id': artist_id}), 200
+    except Exception as e:
+        # In case of error, rollback changes
+        db.session.rollback()
+        # Return an error response.
+        flash('An error occurred. Artist could not be deleted.')
+        return jsonify({'success': False, 'message': 'Server error'}), 500
+    finally:
+        # Close db session
+        db.session.close()
+
+
+#  ----------------------------------------------------------------
 #  Artists
 #  ----------------------------------------------------------------
 
