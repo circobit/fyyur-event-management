@@ -76,6 +76,42 @@
 </section>
 
 <a href="/venues/{{ venue.id }}/edit"><button class="btn btn-primary btn-lg">Edit</button></a>
+<button class="btn btn-danger btn-lg" id="delete-venue-button" data-id="{{ venue.id }}">Delete</button>
+
+<script>
+  // Find the delete button on the page
+  const deleteBtn = document.getElementById('delete-venue-button');
+
+  // Add an event listener for when the button is clicked
+  deleteBtn.addEventListener('click', function(e) {
+    // Get the venue ID from the button's data-id attribute
+    const venueId = e.target.dataset.id;
+
+    // Use the Fetch API to send a DELETE request to our backend
+    fetch('/venues/' + venueId + '/delete', {
+      method: 'DELETE'
+    })
+    .then(function(response) {
+      // The backend will send a JSON response. We need to parse it.
+      return response.json();
+    })
+    .then(function(data) {
+      // Now we can use the JSON data from our backend
+      if (data.success) {
+        // If the deletion was successful, redirect to the homepage
+        window.location.href = '/';
+      } else {
+        // If it failed, show an alert
+        alert('Error: ' + (data.message || 'Venue could not be deleted.'));
+      }
+    })
+    .catch(function(err) {
+      // Handle network errors
+      console.error('Error:', err);
+      alert('A network error occurred. Please try again.');
+    });
+  });
+</script>
 
 {% endblock %}
 

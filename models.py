@@ -49,7 +49,6 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String())
     shows = db.relationship("Show", back_populates="artist", cascade="all, delete-orphan")
-    social_link = db.Column(db.String(500))
     artist_links = db.relationship(
         "ArtistLink", back_populates="artist", cascade="all, delete-orphan"
     )

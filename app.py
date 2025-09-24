@@ -4,7 +4,7 @@
 
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, jsonify, flash, redirect, url_for
 from flask_moment import Moment
 from flask_migrate import Migrate
 import logging
@@ -372,14 +372,32 @@ def create_venue_submission():
     return render_template("forms/new_venue.html", form=form)
 
 
-@app.route("/venues/<venue_id>", methods=["DELETE"])
+@app.route("/venues/<int:venue_id>/delete", methods=["DELETE"])
 def delete_venue(venue_id):
-    # TODO: Complete this endpoint for taking a venue_id, and using
-    # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+    try:
+        # Query venue by id
+        venue_to_delete = Venue.query.get(venue_id)
 
-    # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-    # clicking that button delete it from the db then redirect the user to the homepage
-    return None
+        # Handle case where venue doesn't exist
+        if not venue_to_delete:
+            return jsonify({'success': False, 'message': 'Venue not found'}), 404
+        
+        # Implement soft delete
+        venue_to_delete.deleted_at = datetime.now(timezone.utc)
+        # Comit the transaction
+        db.session.commit()
+        # On success, return a success response.
+        flash('Venue ' + venue_to_delete.name + ' was successfully deleted!')
+        return jsonify({'success': True, 'deleted_id': venue_id}), 200
+    except Exception as e:
+        # In case of error, rollback changes
+        db.session.rollback()
+        # Return an error response.
+        flash('An error occurred. Venue could not be deleted.')
+        return jsonify({'success': False, 'message': 'Server error'}), 500
+    finally:
+        # Close db session
+        db.session.close()
 
 
 #  ----------------------------------------------------------------
@@ -576,8 +594,8 @@ def edit_artist_submission(artist_id):
                 link_obj = Link(url=social_url, link_type=link_type)
                 db.session.add(link_obj)
 
-                # Create VenueLink
-                artist_link = VenueLink(artist=artist_to_edit, link=link_obj)
+                # Create ArtistLink
+                artist_link = ArtistLink(artist=artist_to_edit, link=link_obj)
                 db.session.add(artist_link)
             
             # If the operations succeed, commit changes and show message.
