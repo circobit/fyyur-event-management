@@ -836,17 +836,17 @@ def create_artist_submission():
 
             # On successful db insert, flash success
             flash("Artist " + request.form["name"] + " was successfully listed!")
-
+            return redirect(url_for('index'))
         except Exception as e:
             # On unsuccessful db insert, flash an error instead.
             db.session.rollback()
             flash('An error occurred. Artist ' + form.name.data + ' could not be created.')
-
         finally:
             # Close the connection
             db.session.close()
 
-    return render_template("pages/home.html")
+    # Re-render the form page if it's a GET request OR if validation fails
+    return render_template("forms/new_artist.html", form=form)
 
 
 #  ----------------------------------------------------------------
@@ -915,7 +915,8 @@ def create_show_submission():
         finally:
             db.session.close()
 
-    return render_template("pages/home.html")
+    # Re-render the form page if it's a GET request OR if validation fails
+    return render_template("forms/new_show.html", form=form)
 
 
 @app.errorhandler(404)
